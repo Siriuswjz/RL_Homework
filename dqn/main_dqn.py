@@ -25,10 +25,10 @@ class VGG16FeaturesExtractor(BaseFeaturesExtractor):
         # 只使用VGG16的特征提取部分（卷积层）
         self.features = vgg16.features
         
-        # 冻结预训练权重（可选）
-        if use_pretrained:
-            for param in self.features.parameters():
-                param.requires_grad = False
+        # 不冻结，让VGG16也能学习
+        # if use_pretrained:
+        #     for param in self.features.parameters():
+        #         param.requires_grad = False
         
         # 自适应池化，将任意尺寸输出变为固定尺寸
         self.adaptive_pool = nn.AdaptiveAvgPool2d((7, 7))
