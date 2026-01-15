@@ -220,3 +220,4 @@ output/
 *.npz
 /*.zip
 /*.npz
+/CLAUDE.md

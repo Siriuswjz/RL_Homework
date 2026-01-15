@@ -3,10 +3,15 @@
 \usepackage{geometry}
 \usepackage{graphicx}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{subcaption}
 \usepackage{hyperref}
+\usepackage{fontspec}
+
+\setmainfont{Times New Roman}
 
 \geometry{left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm}
 \setlength{\parindent}{2em}
@@ -21,7 +26,7 @@
 }
 
 \title{\textbf{基于DQN的无人机自主导航技术报告}}
-\author{}
+\author{ZY2557445 汪谨遵}
 \date{}
 
 \begin{document}
@@ -140,14 +145,14 @@ R_{align} = \begin{cases}
 \caption{DQN训练超参数}
 \end{table}
 
-\textbf{评估频率调整说明：}训练初期采用较高的评估频率（每1,000步），以密切监控模型性能。但频繁评估显著降低了训练速度，前390K步耗时超过3天。因此在390K步后将评估频率降低至10,000步，在保证性能监控的同时大幅提升训练效率，最终110K步仅需约4小时完成。
+\textbf{评估频率调整说明：}训练初期采用较高的评估频率（每1,000步），以密切监控模型性能。但频繁评估显著降低了训练速度，前390K步耗时超过1天。因此在390K步后将评估频率降低至10,000步，在保证性能监控的同时大幅提升训练效率，最终110K步仅需约4小时完成。
 
 \subsection{硬件环境}
 
 \begin{itemize}
     \item \textbf{GPU：}NVIDIA RTX 5060
     \item \textbf{框架：}PyTorch 1.7.1, Stable-Baselines3 1.2.0
-    \item \textbf{总训练时间：}约3天（含评估频率优化前后）
+    \item \textbf{总训练时间：}约3天（含评估频率优化前后和第二阶段训练）
 \end{itemize}
 
 \section{实验结果}
@@ -158,25 +163,25 @@ R_{align} = \begin{cases}
 
 \begin{figure}[htbp]
 \centering
-\begin{minipage}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\textwidth}
 \centering
 \includegraphics[width=\textwidth]{figures/eval_reward.png}
-\caption*{(a) 评估奖励变化}
-\end{minipage}
+\caption{评估奖励变化}
+\end{subfigure}
 \hfill
-\begin{minipage}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\textwidth}
 \centering
 \includegraphics[width=\textwidth]{figures/eval_length.png}
-\caption*{(b) Episode长度变化}
-\end{minipage}
+\caption{Episode长度变化}
+\end{subfigure}
 
 \vspace{0.5cm}
 
-\begin{minipage}[t]{0.48\textwidth}
+\begin{subfigure}[t]{0.48\textwidth}
 \centering
 \includegraphics[width=\textwidth]{figures/train_reward.png}
-\caption*{(c) 训练奖励变化}
-\end{minipage}
+\caption{训练奖励变化}
+\end{subfigure}
 \caption{单洞训练过程关键指标变化曲线}
 \label{fig:training_curves}
 \end{figure}
@@ -184,8 +189,8 @@ R_{align} = \begin{cases}
 从图\ref{fig:training_curves}可以看出：
 
 \begin{itemize}
-    \item \textbf{评估奖励：}从初始的负值逐步提升至60-100之间，并在后期保持稳定
-    \item \textbf{Episode长度：}从初始的9步左右提升至10-11步，表明智能体学会了更精确的导航
+    \item \textbf{评估奖励：}从初始的负值逐步提升至150之间，并在后期保持稳定
+    \item \textbf{Episode长度：}从初始的0步左右提升至10-11步，表明智能体学会了更精确的导航
     \item \textbf{训练奖励：}整体呈上升趋势，验证了学习过程的有效性
     \item \textbf{收敛性：}约在300K步后模型性能趋于稳定，表明训练充分
 \end{itemize}
@@ -380,18 +385,5 @@ R_{multi} = R_{base} + \begin{cases}
 多洞训练的性能下降揭示了强化学习中的几个关键问题：过拟合、奖励函数设计、探索-利用平衡、灾难性遗忘等。这些问题在迁移学习和任务泛化中普遍存在，需要更精细的算法设计和训练策略。
 
 最终选择单洞训练的\texttt{best\_model.zip}作为部署模型，该模型展现出更强的泛化能力和稳定性。
-
-\subsection{未来改进方向}
-
-针对多洞训练中暴露的问题，提出以下改进方向：
-
-\begin{enumerate}
-    \item \textbf{数据增强：}在训练中引入随机起始位置、洞口位置扰动，增加环境多样性
-    \item \textbf{奖励函数优化：}设计更平滑的奖励函数，避免奖励稀疏问题
-    \item \textbf{课程学习：}从简单任务逐步过渡到复杂任务，降低学习难度
-    \item \textbf{正则化技术：}引入Dropout、权重衰减等技术，防止过拟合
-    \item \textbf{探索策略优化：}采用更智能的探索策略如UCB、Thompson采样
-    \item \textbf{算法升级：}尝试Rainbow DQN、PPO等更先进的算法
-\end{enumerate}
 
 \end{document}
