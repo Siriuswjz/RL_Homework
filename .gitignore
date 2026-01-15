@@ -212,7 +212,6 @@ output/
 *.onnx
 *.dat
 /.idea
-/*.pdf
 /.kiro/
 /calculate/
 /AirSim/

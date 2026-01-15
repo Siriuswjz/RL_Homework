@@ -10,6 +10,7 @@
 \usepackage{subcaption}
 \usepackage{hyperref}
 \usepackage{fontspec}
+\usepackage{float}
 
 \setmainfont{Times New Roman}
 
@@ -65,7 +66,7 @@ L(\theta) = \mathbb{E}_{(s,a,r,s')\sim D}\left[\left(r + \gamma \max_{a'}Q(s',a'
 
 智能体可执行9个离散动作，对应无人机在YZ平面的移动方向：
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \begin{tabular}{ccc}
 \toprule
@@ -123,9 +124,21 @@ R_{align} = \begin{cases}
     \item \textbf{洞口半径：}0.3米
 \end{itemize}
 
+\subsubsection{训练环境与测试环境}
+
+本项目采用不同的环境配置用于训练和测试：
+
+\begin{itemize}
+    \item \textbf{训练环境（TrainEnv）：}使用特定的场景纹理和洞口位置分布进行训练
+
+    \item \textbf{测试环境（TestEnv）：}采用与训练环境不同的纹理和洞口位置分布，用于评估模型的泛化能力
+\end{itemize}
+
+这种设计能够真实评估模型在未见过的环境中的泛化性能和鲁棒性。
+
 \subsection{训练参数}
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \begin{tabular}{ll}
 \toprule
@@ -145,7 +158,7 @@ R_{align} = \begin{cases}
 \caption{DQN训练超参数}
 \end{table}
 
-\textbf{评估频率调整说明：}训练初期采用较高的评估频率（每1,000步），以密切监控模型性能。但频繁评估显著降低了训练速度，前390K步耗时超过1天。因此在390K步后将评估频率降低至10,000步，在保证性能监控的同时大幅提升训练效率，最终110K步仅需约4小时完成。
+\textbf{评估频率调整说明：}训练初期采用较高的评估频率（每1,000步），以密切监控模型性能。但频繁评估显著降低了训练速度，前390K步耗时超过1天。因此在390K步后将评估频率降低至10,000步，在保证性能监控的同时大幅提升训练效率。
 
 \subsection{硬件环境}
 
@@ -195,9 +208,9 @@ R_{align} = \begin{cases}
     \item \textbf{收敛性：}约在300K步后模型性能趋于稳定，表明训练充分
 \end{itemize}
 
-使用最佳模型进行177个episode的测试，结果如下：
+使用最佳模型在测试环境（TestEnv）进行177个episode的测试，结果如下：
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \begin{tabular}{ll}
 \toprule
@@ -211,16 +224,16 @@ R_{align} = \begin{cases}
 单洞成功率 & 60-70\% \\
 \bottomrule
 \end{tabular}
-\caption{单洞训练模型测试结果}
+\caption{单洞训练模型测试结果（TestEnv）}
 \end{table}
 
 \subsection{多洞训练（第二阶段）}
 
-为进一步提升连续穿洞能力，进行了第二阶段训练。该阶段采用迁移学习策略，加载第一阶段最佳模型权重，在多洞连续穿越环境中继续训练。
+为进一步提升连续穿洞能力，进行了第二阶段训练。该阶段采用迁移学习策略，加载第一阶段最佳模型权重，在训练环境（TrainEnv）中继续训练。与单洞训练不同，多洞训练允许无人机在成功穿越一个洞后继续前进挑战下一个洞，直到发生碰撞才结束episode。
 
 \subsubsection{训练配置}
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \begin{tabular}{ll}
 \toprule
@@ -230,7 +243,7 @@ R_{align} = \begin{cases}
 学习率 & $1\times10^{-4}$ \\
 初始探索率 & 0.2 \\
 预训练模型 & 第一阶段best\_model \\
-环境类型 & MultiHoleEnv \\
+环境类型 & TrainEnv \\
 奖励函数 & 连续穿洞累积奖励 \\
 \bottomrule
 \end{tabular}
@@ -261,9 +274,9 @@ R_{multi} = R_{base} + \begin{cases}
 
 \subsubsection{测试结果}
 
-使用多洞训练的最佳模型进行709个episode的测试：
+使用多洞训练的最佳模型在测试环境（TestEnv）进行709个episode的测试：
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \begin{tabular}{ll}
 \toprule
@@ -276,7 +289,7 @@ R_{multi} = R_{base} + \begin{cases}
 最大穿洞数 & 10 \\
 \bottomrule
 \end{tabular}
-\caption{多洞训练模型测试结果}
+\caption{多洞训练模型测试结果（TestEnv）}
 \end{table}
 
 \subsection{两阶段对比分析}
@@ -292,7 +305,7 @@ R_{multi} = R_{base} + \begin{cases}
 \label{fig:comparison}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \begin{tabular}{lcc}
 \toprule
@@ -313,13 +326,13 @@ R_{multi} = R_{base} + \begin{cases}
 
 通过对比图\ref{fig:comparison}中的训练曲线和测试结果，可以从以下几个方面分析多洞训练性能下降的原因：
 
-\subsubsection{1. 过拟合问题}
+\textbf{1. 过拟合问题}
 
-从图\ref{fig:comparison}可以看出，多洞训练的评估奖励在训练环境中持续上升，但测试性能却显著下降。这是典型的过拟合现象。多洞训练环境采用固定的起始位置和洞口分布，导致模型过度适应训练环境的特定模式，而失去了对新环境的泛化能力。
+从图\ref{fig:comparison}可以看出，多洞训练的评估奖励在训练环境中持续上升，但在测试环境中性能却显著下降。这是典型的过拟合现象。由于训练环境和测试环境具有不同的纹理和洞口位置分布，多洞训练使模型过度拟合训练环境的特定视觉特征和空间布局，导致模型失去了对新环境的泛化能力。
 
-单洞训练通过每次穿洞后重置环境，引入了更多的随机性和多样性，使模型学到的是更通用的导航策略。而多洞训练的连续穿洞机制虽然增加了任务复杂度，但也限制了环境多样性。
+单洞训练虽然也在同一训练环境中进行，但通过频繁的环境重置和随机起始位置，引入了更多的样本多样性，使模型学习到更加通用的视觉特征和导航策略。这种训练方式降低了对特定环境特征的依赖，提高了模型的泛化能力。
 
-\subsubsection{2. 奖励函数设计缺陷}
+\textbf{2. 奖励函数设计缺陷}
 
 多洞环境的累积奖励机制存在以下问题：
 
@@ -331,23 +344,25 @@ R_{multi} = R_{base} + \begin{cases}
 
 相比之下，单洞训练的奖励函数更加平衡，既鼓励接近目标，又给予穿洞即时奖励，使学习过程更加高效。
 
-\subsubsection{3. 探索-利用失衡}
+\textbf{3. 探索-利用失衡}
 
 第二阶段将初始探索率降至0.2，虽然有利于利用已学知识，但在更复杂的多洞环境中，这一设置可能限制了对新策略的探索。从图\ref{fig:comparison}可以看出，多洞训练曲线的波动较大，说明模型在探索和利用之间未能找到良好平衡。
 
 单洞训练从1.0线性衰减至0.02的探索策略，为模型提供了充分的探索空间，使其能够发现更优的导航策略。
 
-\subsubsection{4. 灾难性遗忘}
+\textbf{4. 灾难性遗忘}
 
 迁移学习过程中，模型在适应新任务时可能遗忘了第一阶段学到的基础导航技能。虽然采用了较低的学习率($1\times10^{-4}$)来保护已学知识，但在600K步的长时间训练中，仍无法完全避免遗忘现象。
 
 这一问题在图\ref{fig:comparison}中表现为多洞训练曲线在后期出现波动，说明模型在新旧知识之间产生了冲突。
 
-\subsubsection{5. 训练-测试环境不匹配}
+\textbf{5. 训练-测试环境不匹配}
 
-多洞训练环境的动态特性（连续穿洞、位置更新）与测试环境存在本质差异。测试环境采用碰撞后随机重置的机制，而多洞训练环境则是连续前进。这种不匹配导致模型在训练中学到的"连续穿洞"策略无法有效迁移到测试环境。
+如前文所述，训练环境（TrainEnv）和测试环境（TestEnv）具有不同的纹理和洞口位置分布。这种环境差异对模型的泛化能力提出了挑战。
 
-单洞训练环境与测试环境的机制更加一致，都是单次穿洞后重置，因此模型的泛化能力更强。
+多洞训练通过长时间的连续穿越，使模型过度拟合训练环境的特定纹理特征和洞口位置模式。当面对测试环境中不同的视觉特征和空间布局时，模型难以适应，导致性能显著下降。
+
+相比之下，单洞训练通过频繁的环境重置和随机起始位置，虽然在同一训练环境中进行，但增加了样本多样性，使模型学习到更加鲁棒的视觉特征提取能力。这种训练方式使模型在面对测试环境的新纹理和新布局时，仍能保持较好的性能。因此单洞训练模型的泛化能力更强。
 
 \subsection{模型选择}
 
